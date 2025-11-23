@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirming Email - QR Attendance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .logo {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success {
+            color: #4caf50;
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        .link-button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .link-button:hover {
+            background: #764ba2;
+        }
+
+        .code {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">📧</div>
+        <div id="content">
+            <h1>Confirming Email...</h1>
+            <div class="spinner"></div>
+            <p>Please wait while we confirm your email address.</p>
+        </div>
+    </div>
+
+    <script>
+        // Get query parameters from URL
+        const params = new URLSearchParams(window.location.search);
+        const tokenHash = params.get('token_hash');
+        const type = params.get('type');
+        const appUrl = params.get('app_url') || 'qr-attendance://auth';
+
+        async function confirmEmail() {
+            const contentDiv = document.getElementById('content');
+
+            try {
+                if (!tokenHash) {
+                    throw new Error('No confirmation token found');
+                }
+
+                // Wait for Supabase to verify the token
+                // The actual verification happens in the app via deep link
+                // This page just shows confirmation status
+
+                // Try to redirect to the app with the token
+                setTimeout(() => {
+                    const deepLinkUrl = `${appUrl}?token_hash=${tokenHash}&type=${type || 'email'}`;
+                    
+                    contentDiv.innerHTML = `
+                        <h1 class="success">✓ Email Confirmed!</h1>
+                        <p>Your email has been confirmed successfully.</p>
+                        <p>Redirecting to app...</p>
+                        <div class="spinner"></div>
+                    `;
+
+                    // Try to open the app
+                    window.location.href = deepLinkUrl;
+
+                    // Fallback: show message after 3 seconds
+                    setTimeout(() => {
+                        if (window.location.href === deepLinkUrl) {
+                            contentDiv.innerHTML = `
+                                <h1 class="success">✓ Email Confirmed!</h1>
+                                <p>Your email has been confirmed successfully.</p>
+                                <p>Please open the QR Attendance app to continue.</p>
+                                <a href="${deepLinkUrl}" class="link-button">Open App</a>
+                            `;
+                        }
+                    }, 3000);
+                }, 1000);
+
+            } catch (error) {
+                contentDiv.innerHTML = `
+                    <h1 class="error">✗ Confirmation Failed</h1>
+                    <p>${error.message}</p>
+                    <p>Error details:</p>
+                    <div class="code">${error.message}</div>
+                    <p>Please try signing up again or contact support.</p>
+                `;
+                console.error('Email confirmation error:', error);
+            }
+        }
+
+        // Start confirmation process
+        confirmEmail();
+    </script>
+</body>
+</html>
